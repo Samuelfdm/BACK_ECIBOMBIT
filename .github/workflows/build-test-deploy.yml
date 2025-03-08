@@ -73,10 +73,3 @@ jobs:
 
       - name: Build and Package with Maven
         run: mvn clean package -DskipTests
-
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: 'EciBombit'
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: './target/EciBombit-0.0.1-SNAPSHOT.jar'
