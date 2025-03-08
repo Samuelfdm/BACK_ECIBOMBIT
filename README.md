@@ -79,47 +79,92 @@ La interfaz de usuario está desarrollada con React JS:
 
 ### Pipeline de CI/CD
 
-El proyecto utiliza Azure DevOps para CI/CD con los siguientes pasos:
+El proyecto utiliza GitHub Actions para CI/CD con los siguientes jobs:
 
-1. **Build**: Compilación de microservicios y frontend
-   ```yaml
-   - stage: Build
-     jobs:
-     - job: BuildServices
-       steps:
-       - task: Docker@2
-         inputs:
-           command: 'buildAndPush'
-           containerRegistry: 'bombitregistry'
-           repository: '$(microserviceName)'
-           tags: 'latest'
-   ```
+```yaml
+name: Build, Test, and Deploy
 
-2. **Test**: Ejecución de pruebas unitarias e integración
-   ```yaml
-   - stage: Test
-     jobs:
-     - job: RunTests
-       steps:
-       - task: Maven@3
-         inputs:
-           goals: 'test'
-           publishJUnitResults: true
-   ```
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
 
-3. **Deploy**: Despliegue a Azure Container Apps
-   ```yaml
-   - stage: Deploy
-     jobs:
-     - job: DeployContainerApps
-       steps:
-       - task: AzureCLI@2
-         inputs:
-           azureSubscription: '$(azureSubscription)'
-           scriptType: 'bash'
-           scriptLocation: 'inlineScript'
-           inlineScript: 'az containerapp update --name $(microserviceName) --resource-group bombit-rg --image bombitregistry.azurecr.io/$(microserviceName):latest'
-   ```
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build with Maven
+        run: mvn clean compile
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      - name: Run tests with Maven
+        run: mvn clean verify
+      - name: Upload Test Report (Jacoco)
+        uses: actions/upload-artifact@v4
+        with:
+          name: SpringBoot Test Report
+          path: target/site/jacoco/
+
+  sonarcloud:
+    needs: test
+    uses: ZayraGS1403/central-pipelines/.github/workflows/sonarcloud-analysis.yml@v0.1.1
+    with:
+      java-version: '21'
+      branch-name: 'main'
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+      SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+
+  deploy:
+    needs: sonarcloud
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      - name: Build and Package with Maven
+        run: mvn clean package -DskipTests
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'EciBombit'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: './target/EciBombit-0.0.1-SNAPSHOT.jar'
+```
+
+Este pipeline se activa automáticamente cuando se hace push o se abre un pull request en las ramas main o develop, y consta de los siguientes pasos:
+
+1. **Build**: Compilación del código fuente con Java 21 y Maven
+2. **Test**: Ejecución de pruebas y generación de informes de cobertura con Jacoco
+3. **SonarCloud**: Análisis estático de código para asegurar la calidad y seguridad
+4. **Deploy**: Empaquetado y despliegue a Azure Web App utilizando el perfil de publicación configurado
+
 
 ## Buenas Prácticas
 
