@@ -1,4 +1,4 @@
-name: Build, Test, and Deploy Java Spring Boot Application
+name: Build, Test, and Deploy
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
           cache: maven
 
       - name: Build with Maven
-        run: mvn clean compile  # Removed -X for cleaner output
+        run: mvn clean compile
 
   test:
     needs: build
@@ -44,10 +44,21 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: SpringBoot Test Report
-          path: target/site/jacoco/  # Path to Jacoco report
+          path: target/site/jacoco/
+
+  sonarcloud:
+    needs: test
+    uses: ZayraGS1403/central-pipelines/.github/workflows/sonarcloud-analysis.yml@v0.1.1
+    with:
+      java-version: '21'
+      branch-name: 'main'
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+      SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
 
   deploy:
-    needs: test
+    needs: sonarcloud
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -66,6 +77,6 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'BiblioSoftLoanBack'
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}# Azure Publish Profile secret
-          package: './target/BiblioSoftLoans-0.0.1-SNAPSHOT.jar'  # Ensure this path is correct
+          app-name: 'EciBombit'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: './target/EciBombit-0.0.1-SNAPSHOT.jar'
