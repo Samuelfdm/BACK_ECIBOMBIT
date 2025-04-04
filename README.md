@@ -153,9 +153,9 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'EciBombit'
+          app-name: 'ecibombit'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: './target/EciBombit-0.0.1-SNAPSHOT.jar'
+          package: './target/ecibombit-0.0.1-SNAPSHOT.jar'
 ```
 
 Este pipeline se activa automáticamente cuando se hace push o se abre un pull request en las ramas main o develop, y consta de los siguientes pasos:

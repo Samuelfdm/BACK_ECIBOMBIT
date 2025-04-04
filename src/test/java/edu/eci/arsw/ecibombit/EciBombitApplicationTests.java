@@ -1,4 +1,4 @@
-package edu.eci.arsw.EciBombit;
+package edu.eci.arsw.ecibombit;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
