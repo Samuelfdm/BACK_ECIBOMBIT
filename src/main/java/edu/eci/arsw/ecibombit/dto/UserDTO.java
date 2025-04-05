@@ -13,5 +13,4 @@ public class UserDTO {
     private String oid;
     private String username;
     private String email;
-    private String character;
 }

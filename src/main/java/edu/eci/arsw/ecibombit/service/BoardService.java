@@ -25,6 +25,8 @@ public class BoardService {
                     "# #    +    #  #",
                     "# ###### ####  #",
                     "#      +       #",
+                    "#      +       #",
+                    "#      +       #",
                     "################"
             },
             new String[]{
@@ -41,6 +43,8 @@ public class BoardService {
                     "# #        # # #",
                     "# # ###### # # #",
                     "# # +    + #   #",
+                    "# # +    + #   #",
+                    "# # +    + #   #",
                     "################"
             },
             new String[]{
@@ -56,7 +60,9 @@ public class BoardService {
                     "# # ##### # # ##",
                     "# #   +++   #  #",
                     "# ## ##### ##  #",
-                    "#     ++     ###",
+                    "#     ++     # #",
+                    "#     ++     # #",
+                    "#     ++     # #",
                     "################"
             }
     );
@@ -86,7 +92,7 @@ public class BoardService {
             }
         }
 
-        Board board = new Board(16, 16, cells);
+        Board board = new Board(rawMap.length, rawMap[0].length(), cells);
         placePlayersInCorners(board);
         placeRandomItems(board, config.getItems());
 
