@@ -5,6 +5,7 @@ import edu.eci.arsw.ecibombit.model.UserAccount;
 import edu.eci.arsw.ecibombit.repository.UserAccountRepository;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -16,9 +17,17 @@ public class LoginService {
     }
 
     public UserAccount loginOrRegister(UserDTO dto) {
-        return repository.findByOid(dto.getOid())
-                .map(existing -> update(existing, dto))
-                .orElseGet(() -> create(dto));
+        List<UserAccount> existingUsers = repository.findByOid(dto.getOid());
+        System.out.println("OID recibido: " + dto.getOid());
+        System.out.println("Usuarios encontrados con este OID: " + existingUsers.size());
+
+        if (existingUsers.isEmpty()) {
+            System.out.println("Creando nuevo usuario.");
+            return create(dto);
+        } else {
+            System.out.println("Usuario existente encontrado, actualizando.");
+            return update(existingUsers.getFirst(), dto);
+        }
     }
 
     private UserAccount create(UserDTO dto) {
@@ -36,7 +45,7 @@ public class LoginService {
         return repository.save(user);
     }
 
-    public Optional<UserAccount> getUserByOid(String oid) {
+    public List<UserAccount> getUserByOid(String oid) {
         return repository.findByOid(oid);
     }
 
