@@ -6,7 +6,6 @@ import edu.eci.arsw.ecibombit.repository.UserAccountRepository;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class LoginService {
