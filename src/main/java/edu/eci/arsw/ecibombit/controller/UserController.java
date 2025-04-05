@@ -26,9 +26,9 @@ public class UserController {
 
     @GetMapping("/{oid}")
     public ResponseEntity<UserAccount> getUserByOid(@PathVariable String oid) {
-        List<UserAccount> users = loginService.getUserByOid(oid);
-        if (!users.isEmpty()) {
-            return ResponseEntity.ok(users.get(0)); // Devolver el primer usuario si existe alguno
+        UserAccount user = loginService.getUserByOid(oid);
+        if (user != null) {
+            return ResponseEntity.ok(user); // Devolver el primer usuario si existe alguno
         } else {
             return ResponseEntity.notFound().build();
         }

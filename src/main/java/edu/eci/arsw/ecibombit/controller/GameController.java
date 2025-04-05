@@ -1,6 +1,7 @@
 package edu.eci.arsw.ecibombit.controller;
 
 import edu.eci.arsw.ecibombit.dto.GameRequestDTO;
+import edu.eci.arsw.ecibombit.dto.GameResponseDTO;
 import edu.eci.arsw.ecibombit.model.Board;
 import edu.eci.arsw.ecibombit.model.Game;
 import edu.eci.arsw.ecibombit.model.Player;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/games")
@@ -23,9 +25,11 @@ public class GameController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<Game> createGame(@RequestBody GameRequestDTO request) {
+    public ResponseEntity<GameResponseDTO> createGame(@RequestBody GameRequestDTO request) {
         Game newGame = gameService.createGame(request.getRoomId(), request.getPlayers(), request.getConfig());
-        return ResponseEntity.ok(newGame);
+        return ResponseEntity.ok(new GameResponseDTO(
+                newGame.getId(), newGame.getPlayers(), newGame.getConfig(), newGame.getBoard()
+        ));
     }
 
     @PutMapping("/{gameId}/finish")

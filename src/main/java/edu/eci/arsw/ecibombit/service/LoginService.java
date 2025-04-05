@@ -16,16 +16,17 @@ public class LoginService {
     }
 
     public UserAccount loginOrRegister(UserDTO dto) {
-        List<UserAccount> existingUsers = repository.findByOid(dto.getOid());
-        System.out.println("OID recibido: " + dto.getOid());
-        System.out.println("Usuarios encontrados con este OID: " + existingUsers.size());
+        UserAccount existingUser = repository.findByOid(dto.getOid());
 
-        if (existingUsers.isEmpty()) {
+        System.out.println("OID recibido: " + dto.getOid());
+        System.out.println("Usuario encontrado con este OID: " + (existingUser != null));
+
+        if (existingUser == null) {
             System.out.println("Creando nuevo usuario.");
             return create(dto);
         } else {
             System.out.println("Usuario existente encontrado, actualizando.");
-            return update(existingUsers.getFirst(), dto);
+            return update(existingUser, dto);
         }
     }
 
@@ -44,7 +45,7 @@ public class LoginService {
         return repository.save(user);
     }
 
-    public List<UserAccount> getUserByOid(String oid) {
+    public UserAccount getUserByOid(String oid) {
         return repository.findByOid(oid);
     }
 

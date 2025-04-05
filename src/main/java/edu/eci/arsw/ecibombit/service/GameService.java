@@ -4,6 +4,7 @@ import edu.eci.arsw.ecibombit.model.*;
 import edu.eci.arsw.ecibombit.model.enums.GameStatus;
 import edu.eci.arsw.ecibombit.repository.GameRepository;
 import edu.eci.arsw.ecibombit.repository.PlayerRepository;
+import edu.eci.arsw.ecibombit.repository.UserAccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
@@ -16,12 +17,14 @@ public class GameService {
     private final GameRepository gameRepository;
     private final BoardService boardService;
     private final PlayerRepository playerRepository;
+    private final UserAccountRepository userAccountRepository;
 
     @Autowired
-    public GameService(GameRepository gameRepository, BoardService boardService, PlayerRepository playerRepository) {
+    public GameService(GameRepository gameRepository, BoardService boardService, PlayerRepository playerRepository, UserAccountRepository userAccountRepository) {
         this.gameRepository = gameRepository;
         this.boardService = boardService;
         this.playerRepository = playerRepository;
+        this.userAccountRepository = userAccountRepository;
     }
 
     public Game createGame(String roomId, List<Player> incomingPlayers, GameConfig config) {
@@ -34,8 +37,14 @@ public class GameService {
         List<Player> players = incomingPlayers.stream().map(p -> {
             p.setScore(0);
             p.setKills(0);
-            p.setGame(game); // asigna la relación
+            //p.setGame(game); // asigna la relación
             p.setCharacter(p.getCharacter() != null ? p.getCharacter() : "default");
+            UserAccount account = userAccountRepository.findByUsername(p.getUsername());
+            //Si el username no es unico, se puede rompertodo.
+            //Lo ideal sería hacer esa relacion por oid o _id del usuario (si tenes acceso en frontend).
+            if (account != null) {
+                p.setUserAccount(account);
+            }
             return p;
         }).toList();
         game.setPlayers(players);
@@ -60,7 +69,8 @@ public class GameService {
             player.setCharacter(updated.getCharacter());
 
             // Asociar el juego
-            player.setGame(game);
+            // player.setGame(game);
+
 
             playerRepository.save(player);
         }

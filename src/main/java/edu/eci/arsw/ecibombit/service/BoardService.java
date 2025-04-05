@@ -113,9 +113,11 @@ public class BoardService {
     }
 
     private void placeRandomItems(Board board, int count) {
-        List<Cell> emptyCells = board.getCells().stream()
-                .filter(c -> c.getType() == CellType.EMPTY)
-                .toList();
+        List<Cell> emptyCells = new ArrayList<>(
+                board.getCells().stream()
+                        .filter(c -> c.getType() == CellType.EMPTY)
+                        .toList()
+        );
 
         Collections.shuffle(emptyCells);
         for (int i = 0; i < Math.min(count, emptyCells.size()); i++) {

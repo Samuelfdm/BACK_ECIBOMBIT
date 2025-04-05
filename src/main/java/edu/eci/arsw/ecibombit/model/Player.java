@@ -20,8 +20,6 @@ public class Player {
     private String character;
     private int score;
     private int kills;
-    @DBRef
-    private UserAccount userAccount; //ESTO NO SE VE CUANDO SE ASOCIA EN LA LOGICA
-    @DBRef
-    private Game game;
+    private UserAccount userAccount;
+    //private Game game; //ESTO NO LO ASOCIAMOS
 }
