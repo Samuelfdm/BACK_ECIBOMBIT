@@ -2,6 +2,7 @@ package edu.eci.arsw.ecibombit.service;
 
 import edu.eci.arsw.ecibombit.model.Board;
 import edu.eci.arsw.ecibombit.model.Cell;
+import edu.eci.arsw.ecibombit.model.Player;
 import edu.eci.arsw.ecibombit.model.enums.CellType;
 import edu.eci.arsw.ecibombit.model.GameConfig;
 import org.springframework.stereotype.Service;
@@ -69,7 +70,7 @@ public class BoardService {
 
     private static final Random random = new Random();
 
-    public Board generateBoard(GameConfig config) {
+    public Board generateBoard(GameConfig config, List<Player> players) {
         int select = switch (config.getMap()) {
             case "map1" -> 0;
             case "map2" -> 1;
@@ -93,13 +94,12 @@ public class BoardService {
         }
 
         Board board = new Board(rawMap.length, rawMap[0].length(), cells);
-        placePlayersInCorners(board);
+        placePlayersInCorners(board, players);
         placeRandomItems(board, config.getItems());
-
         return board;
     }
 
-    private void placePlayersInCorners(Board board) {
+    private void placePlayersInCorners(Board board, List<Player> players) {
         List<int[]> corners = List.of(
                 new int[]{1, 1},
                 new int[]{1, board.getColumns() - 2},
@@ -107,10 +107,14 @@ public class BoardService {
                 new int[]{board.getRows() - 2, board.getColumns() - 2}
         );
 
-        for (int[] corner : corners) {
-            getCellAt(board, corner[0], corner[1]).setType(CellType.PLAYER);
+        for (int i = 0; i < Math.min(players.size(), corners.size()); i++) {
+            int[] pos = corners.get(i);
+            Cell cell = getCellAt(board, pos[0], pos[1]);
+            cell.setType(CellType.PLAYER);
+            cell.setPlayerId(players.get(i).getId()); // o .getUsername()
         }
     }
+
 
     private void placeRandomItems(Board board, int count) {
         List<Cell> emptyCells = new ArrayList<>(

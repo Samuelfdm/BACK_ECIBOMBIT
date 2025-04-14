@@ -33,7 +33,7 @@ public class GameService {
         game.setConfig(config);
         game.setStatus(GameStatus.WAITING);
         game.setStartTime(LocalDateTime.now());
-        game.setBoard(generateBoard(config));
+        game.setBoard(generateBoard(config, incomingPlayers));
         List<Player> players = incomingPlayers.stream().map(p -> {
             p.setScore(0);
             p.setKills(0);
@@ -41,7 +41,7 @@ public class GameService {
             p.setCharacter(p.getCharacter() != null ? p.getCharacter() : "default");
             UserAccount account = userAccountRepository.findByUsername(p.getUsername());
             //Si el username no es unico, se puede rompertodo.
-            //Lo ideal sería hacer esa relacion por oid o _id del usuario (si tenes acceso en frontend).
+            //Lo ideal sería hacer esa relacion por oid o _id del usuario.
             if (account != null) {
                 p.setUserAccount(account);
             }
@@ -54,24 +54,18 @@ public class GameService {
     public void finalizeGame(String gameId, List<Player> updatedPlayers) {
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new IllegalArgumentException("Game not found"));
-
         // Marcar como finalizado
         game.setStatus(GameStatus.FINISHED);
         gameRepository.save(game);
-
         // Actualizar jugadores
         for (Player updated : updatedPlayers) {
             Player player = playerRepository.findById(updated.getId())
                     .orElseThrow(() -> new IllegalArgumentException("Player not found: " + updated.getId()));
-
             player.setScore(updated.getScore());
             player.setKills(updated.getKills());
             player.setCharacter(updated.getCharacter());
-
             // Asociar el juego
             // player.setGame(game);
-
-
             playerRepository.save(player);
         }
     }
@@ -84,7 +78,7 @@ public class GameService {
         return gameRepository.save(game);
     }
 
-    private Board generateBoard(GameConfig config) {
-        return boardService.generateBoard(config);
+    private Board generateBoard(GameConfig config, List<Player> incomingPlayers) {
+        return boardService.generateBoard(config, incomingPlayers);
     }
 }
