@@ -20,6 +20,7 @@ public class Player {
     private String character;
     private int score;
     private int kills;
+    private boolean dead;
     private UserAccount userAccount;
     //private Game game; //ESTO NO LO ASOCIAMOS
 }

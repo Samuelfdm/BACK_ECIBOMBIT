@@ -37,6 +37,7 @@ public class GameService {
         List<Player> players = incomingPlayers.stream().map(p -> {
             p.setScore(0);
             p.setKills(0);
+            p.setDead(false);
             //p.setGame(game); // asigna la relación
             p.setCharacter(p.getCharacter() != null ? p.getCharacter() : "default");
             UserAccount account = userAccountRepository.findByUsername(p.getUsername());
