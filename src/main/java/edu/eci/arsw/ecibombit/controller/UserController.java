@@ -6,8 +6,6 @@ import edu.eci.arsw.ecibombit.service.LoginService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -22,15 +20,5 @@ public class UserController {
     public ResponseEntity<UserAccount> loginOrRegister(@RequestBody UserDTO userDTO) {
         UserAccount user = loginService.loginOrRegister(userDTO);
         return ResponseEntity.ok(user);
-    }
-
-    @GetMapping("/{oid}")
-    public ResponseEntity<UserAccount> getUserByOid(@PathVariable String oid) {
-        UserAccount user = loginService.getUserByOid(oid);
-        if (user != null) {
-            return ResponseEntity.ok(user); // Devolver el primer usuario si existe alguno
-        } else {
-            return ResponseEntity.notFound().build();
-        }
     }
 }

@@ -38,7 +38,6 @@ public class GameService {
             p.setScore(0);
             p.setKills(0);
             p.setDead(false);
-            //p.setGame(game); // asigna la relación
             p.setCharacter(p.getCharacter() != null ? p.getCharacter() : "default");
             UserAccount account = userAccountRepository.findByUsername(p.getUsername());
             //Si el username no es unico, se puede rompertodo.
@@ -65,18 +64,12 @@ public class GameService {
             player.setScore(updated.getScore());
             player.setKills(updated.getKills());
             player.setCharacter(updated.getCharacter());
-            // Asociar el juego
-            // player.setGame(game);
             playerRepository.save(player);
         }
     }
 
-    public Optional<Game> getGameByRoomId(String roomId) {
-        return gameRepository.findByRoomId(roomId);
-    }
-
-    public Game updateGame(Game game) {
-        return gameRepository.save(game);
+    public Optional<Game> getGameByGameId(String gameId) {
+        return gameRepository.findById(gameId);
     }
 
     private Board generateBoard(GameConfig config, List<Player> incomingPlayers) {
