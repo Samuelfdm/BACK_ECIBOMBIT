@@ -8,6 +8,7 @@ import edu.eci.arsw.ecibombit.model.Player;
 import edu.eci.arsw.ecibombit.service.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class GameController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("@jwtValidator.hasValidAppDisplayName(authentication)")
     public ResponseEntity<GameResponseDTO> createGame(@RequestBody GameRequestDTO request) {
         Game newGame = gameService.createGame(request.getRoomId(), request.getPlayers(), request.getConfig());
         return ResponseEntity.ok(new GameResponseDTO(

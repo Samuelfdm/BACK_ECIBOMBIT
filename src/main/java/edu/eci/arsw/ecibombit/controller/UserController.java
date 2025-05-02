@@ -4,6 +4,7 @@ import edu.eci.arsw.ecibombit.dto.UserDTO;
 import edu.eci.arsw.ecibombit.model.UserAccount;
 import edu.eci.arsw.ecibombit.service.LoginService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
+    //@PreAuthorize("@jwtValidator.hasValidAppDisplayName(authentication)")
     public ResponseEntity<UserAccount> loginOrRegister(@RequestBody UserDTO userDTO) {
         UserAccount user = loginService.loginOrRegister(userDTO);
         return ResponseEntity.ok(user);

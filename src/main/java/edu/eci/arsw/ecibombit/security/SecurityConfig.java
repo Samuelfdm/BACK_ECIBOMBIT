@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.web.SecurityFilterChain;
 
 import lombok.Value;
@@ -30,13 +32,12 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // permite preflight CORS
-                .requestMatchers("/users/login", "/users/register").authenticated()
+                .requestMatchers("/users/login", "/users/register").permitAll()
                 .requestMatchers("/users/**").authenticated()
                 .requestMatchers("/games/create").authenticated()
                 .requestMatchers("/games/**").authenticated()
                 .anyRequest().permitAll()
-            )
-            .addFilterBefore(new JwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+            ).oauth2ResourceServer(oauth2 -> oauth2.jwt());
 
         return http.build();
     }
@@ -47,11 +48,16 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // permite a todas las rutas
-                        .allowedOrigins("http://localhost:5173") // origen del frontend
+                        .allowedOrigins("http://localhost:5173","http://localhost:3000") // origen del frontend
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // métodos permitidos
                         .allowedHeaders("*")
                         .allowCredentials(true);
             }
         };
+    }
+    
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        return JwtDecoders.fromIssuerLocation("https://login.microsoftonline.com/9dc4175a-6862-48a3-b836-f693f6327e6b/v2.0");
     }
 }
