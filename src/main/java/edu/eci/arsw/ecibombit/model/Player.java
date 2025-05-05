@@ -23,5 +23,9 @@ public class Player {
     private boolean winner; //Para saber si fue o no el ganador de la partida (o uno de los ganadores en caso de empate)
     private int playerRank;
     private int timeAlive;
+    private int totalBombsPlaced;
+    private int totalBlocksDestroyed;
+    private int totalMoves;
+
     private UserAccount userAccount;
 }

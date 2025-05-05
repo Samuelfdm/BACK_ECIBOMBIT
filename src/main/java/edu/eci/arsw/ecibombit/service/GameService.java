@@ -33,6 +33,9 @@ public class GameService {
         game.setConfig(config);
         game.setStatus(GameStatus.WAITING);
         game.setStartTime(LocalDateTime.now());
+        game.setTotalBlocksDestroyed(0);
+        game.setTotalBombsPlaced(0);
+        game.setTotalMoves(0);
         game.setBoard(generateBoard(config, incomingPlayers));
         List<Player> players = incomingPlayers.stream().map(p -> {
             p.setScore(0);
@@ -42,6 +45,9 @@ public class GameService {
             p.setWinner(false);
             p.setPlayerRank(-1);
             p.setTimeAlive(-1);
+            p.setTotalBlocksDestroyed(0);
+            p.setTotalBombsPlaced(0);
+            p.setTotalMoves(0);
             UserAccount account = userAccountRepository.findByUsername(p.getUsername());
             if (account != null) {
                 p.setUserAccount(account);

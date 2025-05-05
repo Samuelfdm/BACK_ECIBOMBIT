@@ -13,4 +13,5 @@ public class GameConfig {
     private String map;   // Nombre del mapa
     private int time;     // Minutos
     private int items;    // Cantidad de ítems disponibles
+    
 }

@@ -26,5 +26,8 @@ public class Game {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private Board board;
+    private int totalBombsPlaced;
+    private int totalBlocksDestroyed;
+    private int totalMoves;
 
 }
