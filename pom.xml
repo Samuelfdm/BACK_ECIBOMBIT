@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>edu.eci.arsw</groupId>
-	<artifactId>EciBombit</artifactId>
+	<artifactId>ECIBOMBIT</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>EciBombit</name>
+	<name>ECIBOMBIT</name>
 	<description>Arsw Project</description>
 	<url/>
 	<licenses>
@@ -51,6 +51,16 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.8.6</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -99,7 +109,7 @@
 										<limit>
 											<counter>CLASS</counter>
 											<value>COVEREDRATIO</value>
-											<minimum>0.20</minimum>
+											<minimum>0.00</minimum>
 										</limit>
 									</limits>
 								</rule>

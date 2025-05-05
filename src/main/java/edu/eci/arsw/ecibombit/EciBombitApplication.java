@@ -1,4 +1,4 @@
-package edu.eci.arsw.EciBombit;
+package edu.eci.arsw.ecibombit;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
