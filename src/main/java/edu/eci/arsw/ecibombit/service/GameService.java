@@ -39,9 +39,10 @@ public class GameService {
             p.setKills(0);
             p.setDead(false);
             p.setCharacter(p.getCharacter() != null ? p.getCharacter() : "default");
+            p.setWinner(false);
+            p.setPlayerRank(-1);
+            p.setTimeAlive(-1);
             UserAccount account = userAccountRepository.findByUsername(p.getUsername());
-            //Si el username no es unico, se puede rompertodo.
-            //Lo ideal sería hacer esa relacion por oid o _id del usuario.
             if (account != null) {
                 p.setUserAccount(account);
             }

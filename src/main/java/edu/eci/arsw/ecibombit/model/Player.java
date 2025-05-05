@@ -21,6 +21,7 @@ public class Player {
     private int kills;
     private boolean dead;
     private boolean winner; //Para saber si fue o no el ganador de la partida (o uno de los ganadores en caso de empate)
+    private int playerRank;
+    private int timeAlive;
     private UserAccount userAccount;
-    //private Game game; //ESTO NO LO ASOCIAMOS
 }
