@@ -36,6 +36,7 @@ public class GameService {
         game.setTotalBlocksDestroyed(0);
         game.setTotalBombsPlaced(0);
         game.setTotalMoves(0);
+        game.setKills(0);
         game.setBoard(generateBoard(config, incomingPlayers));
         List<Player> players = incomingPlayers.stream().map(p -> {
             p.setScore(0);

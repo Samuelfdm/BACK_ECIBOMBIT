@@ -29,5 +29,6 @@ public class Game {
     private int totalBombsPlaced;
     private int totalBlocksDestroyed;
     private int totalMoves;
+    private int kills;
 
 }
