@@ -32,23 +32,12 @@ public class GameService {
         game.setRoomId(roomId);
         game.setConfig(config);
         game.setStatus(GameStatus.WAITING);
-        game.setStartTime(LocalDateTime.now());
-        game.setTotalBlocksDestroyed(0);
-        game.setTotalBombsPlaced(0);
-        game.setTotalMoves(0);
-        game.setKills(0);
+        game.setStartTime(LocalDateTime.now().plusSeconds(3));
+        propertiesGame(game, 0,0,0,0);
         game.setBoard(generateBoard(config, incomingPlayers));
         List<Player> players = incomingPlayers.stream().map(p -> {
-            p.setScore(0);
-            p.setKills(0);
-            p.setDead(false);
-            p.setCharacter(p.getCharacter() != null ? p.getCharacter() : "default");
-            p.setWinner(false);
-            p.setPlayerRank(-1);
-            p.setTimeAlive(-1);
-            p.setTotalBlocksDestroyed(0);
-            p.setTotalBombsPlaced(0);
-            p.setTotalMoves(0);
+            propertiesPlayer(p, 0, 0, false, p.getCharacter() != null ? p.getCharacter() : "default", 
+                                false, -1, -1, 0, 0, 0, false);
             UserAccount account = userAccountRepository.findByUsername(p.getUsername());
             if (account != null) {
                 p.setUserAccount(account);
@@ -57,24 +46,93 @@ public class GameService {
         }).toList();
         game.setPlayers(players);
         return gameRepository.save(game);
+    }   
+
+    private void propertiesPlayer(Player p, int score, int kills, boolean dead, String character,
+                               boolean winner, int playerRank, int timeAlive,
+                               int totalBlocksDestroyed, int totalBombsPlaced, int totalMoves, boolean leftGame) {
+        // Puntuación
+        p.setScore(score);
+        p.setKills(kills);
+        // Estado
+        p.setDead(dead);
+        p.setCharacter(character);
+        p.setWinner(winner);
+        p.setPlayerRank(playerRank);
+        p.setTimeAlive(timeAlive);
+        // Estadísticas
+        p.setTotalBlocksDestroyed(totalBlocksDestroyed);
+        p.setTotalBombsPlaced(totalBombsPlaced);
+        p.setTotalMoves(totalMoves);
+        p.setLeftGame(leftGame);
     }
+
+    private void propertiesGame(Game game, int totalBlocksDestroyed,int totalBombsPlaced, int totalMoves, int kills){
+        game.setTotalBlocksDestroyed(totalBlocksDestroyed);
+        game.setTotalBombsPlaced(totalBombsPlaced);
+        game.setTotalMoves(totalMoves);
+        game.setKills(kills);
+    }
+
 
     public void finalizeGame(String gameId, List<Player> updatedPlayers) {
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new IllegalArgumentException("Game not found"));
         // Marcar como finalizado
         game.setStatus(GameStatus.FINISHED);
-        gameRepository.save(game);
-        // Actualizar jugadores
+        game.setEndTime(LocalDateTime.now());
+        
+        List<Player> gamePlayers = game.getPlayers();
+
         for (Player updated : updatedPlayers) {
-            Player player = playerRepository.findById(updated.getId())
-                    .orElseThrow(() -> new IllegalArgumentException("Player not found: " + updated.getId()));
-            player.setScore(updated.getScore());
-            player.setKills(updated.getKills());
-            player.setCharacter(updated.getCharacter());
+            // Buscar en los jugadores del juego por username
+            Player player = gamePlayers.stream()
+                    .filter(p -> p.getUsername().equals(updated.getUsername()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Player with username " + updated.getUsername() + " not found in game " + gameId));
+
+                propertiesPlayer(player, updated.getScore(), updated.getKills(), updated.isDead(), updated.getCharacter(), 
+                                    updated.isWinner(), updated.getPlayerRank(), updated.getTimeAlive(), 
+                                    updated.getTotalBlocksDestroyed(), updated.getTotalBombsPlaced(), updated.getTotalMoves(), updated.isLeftGame());
+                playerRepository.save(player);
+        }
+        gameRepository.save(game);
+    }
+
+    public void finalizeGame(String gameId, Game updatedGame) {
+        // Buscar el juego por su ID
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new IllegalArgumentException("Game not found"));
+    
+        // Actualizar estado general del juego
+        game.setStatus(GameStatus.FINISHED);
+        game.setTotalBlocksDestroyed(updatedGame.getTotalBlocksDestroyed());
+        game.setTotalBombsPlaced(updatedGame.getTotalBombsPlaced());
+        game.setTotalMoves(updatedGame.getTotalMoves());
+        game.setKills(updatedGame.getKills());
+        propertiesGame(game, updatedGame.getTotalBlocksDestroyed(),updatedGame.getTotalBombsPlaced(),
+                        updatedGame.getTotalMoves(),updatedGame.getKills());
+
+        List<Player> gamePlayers = game.getPlayers();
+    
+        // Actualizar jugadores
+        for (Player updated : updatedGame.getPlayers()) {
+            Player player = gamePlayers.stream()
+                    .filter(p -> p.getUsername().equals(updated.getUsername()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Player with username " + updated.getUsername() + " not found in game " + gameId));
+
+            propertiesPlayer(player, updated.getScore(), updated.getKills(), updated.isDead(), updated.getCharacter(), 
+                                updated.isWinner(), updated.getPlayerRank(), updated.getTimeAlive(), updated.getTotalBlocksDestroyed(), 
+                                updated.getTotalBombsPlaced(), updated.getTotalMoves(), updated.isLeftGame());
             playerRepository.save(player);
         }
+    
+        gameRepository.save(game);
     }
+    
+
+   
 
     public Optional<Game> getGameByGameId(String gameId) {
         return gameRepository.findById(gameId);

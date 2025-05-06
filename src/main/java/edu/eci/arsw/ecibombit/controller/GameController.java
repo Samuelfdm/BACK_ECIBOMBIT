@@ -29,9 +29,15 @@ public class GameController {
         ));
     }
 
-    @PutMapping("/{gameId}/finish")
+    @PutMapping("/{gameId}/finish/players")
     public ResponseEntity<Void> finishGame(@PathVariable String gameId, @RequestBody List<Player> players) {
         gameService.finalizeGame(gameId, players);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{gameId}/finish")
+    public ResponseEntity<Void> finishGame(@PathVariable String gameId, @RequestBody Game game) {
+        gameService.finalizeGame(gameId, game);
         return ResponseEntity.ok().build();
     }
 
