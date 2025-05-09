@@ -9,6 +9,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -30,6 +31,6 @@ public class Game {
     private int totalBlocksDestroyed;
     private int totalMoves;
     private int kills;
-    
+    private Map<String, List<Map<String, Object>>> statistics;
 
 }

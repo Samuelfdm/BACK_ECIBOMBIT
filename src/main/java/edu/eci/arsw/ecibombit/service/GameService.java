@@ -8,7 +8,10 @@ import edu.eci.arsw.ecibombit.repository.UserAccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -45,8 +48,20 @@ public class GameService {
             return p;
         }).toList();
         game.setPlayers(players);
+        game.setStatistics(statisticsGame());
         return gameRepository.save(game);
-    }   
+    }  
+    
+    public Map<String, List<Map<String, Object>>> statisticsGame() {
+    
+        Map<String, List<Map<String, Object>>> stats = new HashMap<>();
+        stats.put("timeAlive", new ArrayList<>());
+        stats.put("totalBombsPlaced", new ArrayList<>());
+        stats.put("totalBlocksDestroyed", new ArrayList<>());
+        stats.put("totalMoves", new ArrayList<>());
+        return stats;
+
+    }
 
     private void propertiesPlayer(Player p, int score, int kills, boolean dead, String character,
                                boolean winner, int playerRank, int timeAlive,
@@ -104,15 +119,8 @@ public class GameService {
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new IllegalArgumentException("Game not found"));
     
-        // Actualizar estado general del juego
-        game.setStatus(GameStatus.FINISHED);
-        game.setTotalBlocksDestroyed(updatedGame.getTotalBlocksDestroyed());
-        game.setTotalBombsPlaced(updatedGame.getTotalBombsPlaced());
-        game.setTotalMoves(updatedGame.getTotalMoves());
-        game.setKills(updatedGame.getKills());
-        propertiesGame(game, updatedGame.getTotalBlocksDestroyed(),updatedGame.getTotalBombsPlaced(),
-                        updatedGame.getTotalMoves(),updatedGame.getKills());
-
+        //Creacion de estadisticas
+        Map<String, List<Map<String, Object>>> stats = game.getStatistics();
         List<Player> gamePlayers = game.getPlayers();
     
         // Actualizar jugadores
@@ -122,17 +130,26 @@ public class GameService {
                     .findFirst()
                     .orElseThrow(() -> new IllegalArgumentException("Player with username " + updated.getUsername() + " not found in game " + gameId));
 
+            // Actualizar jugador
             propertiesPlayer(player, updated.getScore(), updated.getKills(), updated.isDead(), updated.getCharacter(), 
                                 updated.isWinner(), updated.getPlayerRank(), updated.getTimeAlive(), updated.getTotalBlocksDestroyed(), 
                                 updated.getTotalBombsPlaced(), updated.getTotalMoves(), updated.isLeftGame());
             playerRepository.save(player);
+
+            // Agregar jugador a las estadisticas
+            String name = player.getUsername();
+            stats.get("timeAlive").add(Map.of("name", name, "value", player.getTimeAlive()));
+            stats.get("totalBombsPlaced").add(Map.of("name", name, "value", player.getTotalBombsPlaced()));
+            stats.get("totalBlocksDestroyed").add(Map.of("name", name, "value", player.getTotalBlocksDestroyed()));
+            stats.get("totalMoves").add(Map.of("name", name, "value", player.getTotalMoves()));
         }
-    
+
+        // Actualizar estado general del juego
+        game.setStatus(GameStatus.FINISHED);
+        propertiesGame(game, updatedGame.getTotalBlocksDestroyed(), updatedGame.getTotalBombsPlaced(), updatedGame.getTotalMoves(), updatedGame.getKills());
+
         gameRepository.save(game);
     }
-    
-
-   
 
     public Optional<Game> getGameByGameId(String gameId) {
         return gameRepository.findById(gameId);

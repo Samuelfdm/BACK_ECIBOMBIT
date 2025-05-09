@@ -27,6 +27,6 @@ public class Player {
     private int totalBombsPlaced;
     private int totalBlocksDestroyed;
     private int totalMoves;
-
     private UserAccount userAccount;
+    
 }
