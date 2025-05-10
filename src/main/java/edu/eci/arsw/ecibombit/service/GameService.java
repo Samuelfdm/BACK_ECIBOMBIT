@@ -59,6 +59,7 @@ public class GameService {
         stats.put("totalBombsPlaced", new ArrayList<>());
         stats.put("totalBlocksDestroyed", new ArrayList<>());
         stats.put("totalMoves", new ArrayList<>());
+        stats.put("kills", new ArrayList<>());
         return stats;
 
     }
@@ -138,17 +139,34 @@ public class GameService {
 
             // Agregar jugador a las estadisticas
             String name = player.getUsername();
-            stats.get("timeAlive").add(Map.of("name", name, "value", player.getTimeAlive()));
-            stats.get("totalBombsPlaced").add(Map.of("name", name, "value", player.getTotalBombsPlaced()));
-            stats.get("totalBlocksDestroyed").add(Map.of("name", name, "value", player.getTotalBlocksDestroyed()));
-            stats.get("totalMoves").add(Map.of("name", name, "value", player.getTotalMoves()));
+            String character = colorPlayer(player.getCharacter());
+            stats.get("timeAlive").add(Map.of("id", name, "name", name, "value", player.getTimeAlive(), "color", character));
+            stats.get("totalBombsPlaced").add(Map.of("id", name, "name", name, "value", player.getTotalBombsPlaced(), "color", character));
+            stats.get("totalBlocksDestroyed").add(Map.of("id", name, "name", name, "value", player.getTotalBlocksDestroyed(), "color", character));
+            stats.get("totalMoves").add(Map.of("id", name, "name", name, "value", player.getTotalMoves(), "color", character));
+            stats.get("kills").add(Map.of("id", name, "name", name, "value", player.getKills(), "color", character));
         }
 
         // Actualizar estado general del juego
         game.setStatus(GameStatus.FINISHED);
         propertiesGame(game, updatedGame.getTotalBlocksDestroyed(), updatedGame.getTotalBombsPlaced(), updatedGame.getTotalMoves(), updatedGame.getKills());
-
         gameRepository.save(game);
+    }
+
+    public String colorPlayer(String character){
+        switch (character.toLowerCase()) {
+            case "bomber4":
+                return "#7B61FF";
+            case "bomber3":
+                return "#3498DB";
+            case "bomber2":
+                return "#F39C12";
+            case "bomber1":
+                return "#2ECC71";
+            default:
+                return "#CCCCCC"; 
+        }
+
     }
 
     public Optional<Game> getGameByGameId(String gameId) {
