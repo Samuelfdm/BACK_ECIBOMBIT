@@ -1,4 +1,4 @@
-name: Build, Test - Backend EciBombit
+name: Build and Push - Backend EciBombit
 
 on:
   push:
@@ -21,7 +21,19 @@ jobs:
           cache: maven
 
       - name: Build with Maven
-        run: mvn clean compile
+        run: mvn clean package -DskipTests
+
+      - name: Login to Azure Container Registry
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/backend:latest .
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/backend:latest
 
   test:
     needs: build
@@ -52,7 +64,7 @@ jobs:
     with:
       java-version: '21'
       branch-name: ${{ github.ref_name }}
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
-      SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+      secrets:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+        SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
