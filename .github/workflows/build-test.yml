@@ -101,14 +101,6 @@ jobs:
               --name ${{ env.CONTAINER_APP_NAME }} \
               --resource-group ${{ env.RESOURCE_GROUP }} \
               --image ${{ env.ACR_NAME }}.azurecr.io/backend:${{ env.image_tag }} \
-              --target-port 8080 \
-              --ingress external \
-              --cpu 1 \
-              --memory 2Gi \
-              --health-probe-protocol http \
-              --health-probe-path /actuator/health \
-              --health-probe-interval 10 \
-              --health-probe-timeout 5
               --set-env-vars \
                 FRONTEND_URL=${{ secrets.FRONTEND_URL }} \
                 BACKEND_URL=${{ secrets.BACKEND_URL }} \
