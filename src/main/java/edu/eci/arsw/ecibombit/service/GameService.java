@@ -1,5 +1,6 @@
 package edu.eci.arsw.ecibombit.service;
 
+import edu.eci.arsw.ecibombit.Exception.GameException;
 import edu.eci.arsw.ecibombit.model.*;
 import edu.eci.arsw.ecibombit.model.enums.GameStatus;
 import edu.eci.arsw.ecibombit.repository.GameRepository;
@@ -10,9 +11,11 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
+
 
 @Service
 public class GameService {
@@ -30,30 +33,58 @@ public class GameService {
         this.userAccountRepository = userAccountRepository;
     }
 
-    public Game createGame(String roomId, List<Player> incomingPlayers, GameConfig config) {
+    public Game createGame(String roomId, List<Player> incomingPlayers, GameConfig config) throws GameException {
+
+        //validacion de datos
+
+        List<Player> players =  validation(roomId,incomingPlayers,config);
+
+        // Despues de la verificacion de jugadores, roomID y configuraciones se puede crear el juego
+
         Game game = new Game();
         game.setRoomId(roomId);
         game.setConfig(config);
         game.setStatus(GameStatus.WAITING);
         game.setStartTime(LocalDateTime.now().plusSeconds(3));
         propertiesGame(game, 0,0,0,0);
-        game.setBoard(generateBoard(config, incomingPlayers));
-        List<Player> players = incomingPlayers.stream().map(p -> {
-            propertiesPlayer(p, 0, 0, false, p.getCharacter() != null ? p.getCharacter() : "default", 
-                                false, -1, -1, 0, 0, 0, false);
-            UserAccount account = userAccountRepository.findByUsername(p.getUsername());
-            if (account != null) {
-                p.setUserAccount(account);
-            }
-            return p;
-        }).toList();
+        game.setBoard(generateBoard(config, players));
         game.setPlayers(players);
         game.setStatistics(statisticsGame());
         return gameRepository.save(game);
     }  
+
+    public List<Player> validation(String roomId, List<Player> incomingPlayers, GameConfig config) throws GameException {
+        if (roomId == null) throw new GameException(GameException.ROOMID_INVALID);
+        if (incomingPlayers == null) throw new GameException(GameException.PLAYERS_INVALID);
+        if (config == null) throw new GameException(GameException.CONFIG_INVALID);
+
+        Set<String> uniqueUsernames = new HashSet<>();
+        List<Player> validatedPlayers = new ArrayList<>();
+
+        for (Player player : incomingPlayers) {
+            if (!uniqueUsernames.add(player.getUsername())) {
+                throw new GameException(GameException.DUPLICATE_USERNAME + ": " + player.getUsername());
+            }
+
+            UserAccount account = userAccountRepository.findByUsername(player.getUsername());
+            if (account == null) {
+                throw new GameException(GameException.PLAYER_NOT_FOUND, player.getUsername());
+            }
+            propertiesPlayer(player, 0, 0, false, player.getCharacter() != null ? player.getCharacter() : "default", 
+                                    false, -1, -1, 0, 0, 0, false);
+            player.setUserAccount(account);
+            validatedPlayers.add(player);
+        }
+        
+        if (config.getItems() <= 0 || config.getTime() <= 0) {
+            throw new GameException(GameException.CONFIG_INVALID);
+        }
+
+        return validatedPlayers;
+    }
+
     
     public Map<String, List<Map<String, Object>>> statisticsGame() {
-    
         Map<String, List<Map<String, Object>>> stats = new HashMap<>();
         stats.put("timeAlive", new ArrayList<>());
         stats.put("totalBombsPlaced", new ArrayList<>());
@@ -61,29 +92,41 @@ public class GameService {
         stats.put("totalMoves", new ArrayList<>());
         stats.put("kills", new ArrayList<>());
         return stats;
-
     }
 
-    private void propertiesPlayer(Player p, int score, int kills, boolean dead, String character,
-                               boolean winner, int playerRank, int timeAlive,
-                               int totalBlocksDestroyed, int totalBombsPlaced, int totalMoves, boolean leftGame) {
-        // Puntuación
+    public void propertiesPlayer(Player p, Integer score, Integer kills, Boolean dead, String character,
+                               Boolean winner, Integer playerRank, Integer timeAlive,
+                               Integer totalBlocksDestroyed, Integer totalBombsPlaced, Integer totalMoves, Boolean leftGame) throws GameException {
+
+        if (p == null) throw new GameException(GameException.PLAYER_NOT_FOUND);
+        if (score == null || kills == null || dead == null || character == null ||
+            winner == null || playerRank == null || timeAlive == null ||
+            totalBlocksDestroyed == null || totalBombsPlaced == null ||
+            totalMoves == null || leftGame == null) {
+            throw new GameException(GameException.NULL_PROPERTY_PLAYER);
+        }
+
         p.setScore(score);
         p.setKills(kills);
-        // Estado
         p.setDead(dead);
         p.setCharacter(character);
         p.setWinner(winner);
         p.setPlayerRank(playerRank);
         p.setTimeAlive(timeAlive);
-        // Estadísticas
         p.setTotalBlocksDestroyed(totalBlocksDestroyed);
         p.setTotalBombsPlaced(totalBombsPlaced);
         p.setTotalMoves(totalMoves);
         p.setLeftGame(leftGame);
     }
 
-    private void propertiesGame(Game game, int totalBlocksDestroyed,int totalBombsPlaced, int totalMoves, int kills){
+
+    public void propertiesGame(Game game, Integer totalBlocksDestroyed, Integer totalBombsPlaced, Integer totalMoves, Integer kills) throws GameException {
+
+        if (game == null) throw new GameException(GameException.GAME_NOT_FOUND);
+        if (totalBlocksDestroyed == null || totalBombsPlaced == null || totalMoves == null || kills == null) {
+            throw new GameException(GameException.NULL_PROPERTY_GAME);
+        }
+
         game.setTotalBlocksDestroyed(totalBlocksDestroyed);
         game.setTotalBombsPlaced(totalBombsPlaced);
         game.setTotalMoves(totalMoves);
@@ -91,13 +134,12 @@ public class GameService {
     }
 
 
-    public void finalizeGame(String gameId, List<Player> updatedPlayers) {
-        Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new IllegalArgumentException("Game not found"));
+/**
+    public void finalizeGame(String gameId, List<Player> updatedPlayers) throws GameException {
+        Game game = getGameByGameId(gameId);
         // Marcar como finalizado
         game.setStatus(GameStatus.FINISHED);
         game.setEndTime(LocalDateTime.now());
-        
         List<Player> gamePlayers = game.getPlayers();
 
         for (Player updated : updatedPlayers) {
@@ -114,11 +156,10 @@ public class GameService {
         }
         gameRepository.save(game);
     }
-
-    public void finalizeGame(String gameId, Game updatedGame) {
+*/
+    public void finalizeGame(String gameId, Game updatedGame) throws GameException {
         // Buscar el juego por su ID
-        Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new IllegalArgumentException("Game not found"));
+        Game game = getGameByGameId(gameId);
     
         //Creacion de estadisticas
         Map<String, List<Map<String, Object>>> stats = game.getStatistics();
@@ -169,9 +210,12 @@ public class GameService {
 
     }
 
-    public Optional<Game> getGameByGameId(String gameId) {
-        return gameRepository.findById(gameId);
+    public Game getGameByGameId(String gameId) throws GameException {
+        if(gameId == null) throw new GameException(GameException.GAMEID_INVALID);
+        return gameRepository.findById(gameId)
+                .orElseThrow(() ->new GameException(GameException.GAME_NOT_FOUND));
     }
+
 
     private Board generateBoard(GameConfig config, List<Player> incomingPlayers) {
         return boardService.generateBoard(config, incomingPlayers);

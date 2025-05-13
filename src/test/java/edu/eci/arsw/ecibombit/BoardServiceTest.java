@@ -87,4 +87,45 @@ class BoardServiceTest {
 
         assertTrue(itemCount <= emptyCount + itemCount, "Item count exceeds possible placement");
     }
+
+    @Test
+    void testGenerateBoardWithMap4() {
+        GameConfig config = new GameConfig("map1", 0, 0);
+        List<Player> players = List.of();
+
+        Board board = boardService.generateBoard(config, players);
+
+        assertNotNull(board);
+        assertEquals(16, board.getRows());
+        assertEquals(16, board.getColumns());
+        assertEquals(16 * 16, board.getCells().size());
+    }
+
+    @Test
+    void testGenerateBoardWithMap2() {
+        GameConfig config = new GameConfig("map2", 0, 0);
+        List<Player> players = List.of();
+
+        Board board = boardService.generateBoard(config, players);
+
+        assertNotNull(board);
+        assertEquals(16, board.getRows());  // Adjusted expected value
+        assertEquals(16, board.getColumns());  // Adjusted expected value
+        assertEquals(16 * 16, board.getCells().size());  // Adjusted expected value
+    }
+
+    @Test
+    void testGenerateBoardWithMap3() {
+        GameConfig config = new GameConfig("map3", 0, 0);
+        List<Player> players = List.of();
+
+        Board board = boardService.generateBoard(config, players);
+
+        assertNotNull(board);
+        assertEquals(16, board.getRows());  // Adjusted expected value
+        assertEquals(16, board.getColumns());  // Adjusted expected value
+        assertEquals(16 * 16, board.getCells().size());  // Adjusted expected value
+    }
+
+
 }

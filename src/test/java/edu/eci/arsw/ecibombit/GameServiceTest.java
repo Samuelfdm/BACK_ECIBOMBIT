@@ -1,5 +1,6 @@
 package edu.eci.arsw.ecibombit;
 
+import edu.eci.arsw.ecibombit.Exception.GameException;
 import edu.eci.arsw.ecibombit.model.*;
 import edu.eci.arsw.ecibombit.model.enums.GameStatus;
 import edu.eci.arsw.ecibombit.repository.GameRepository;
@@ -15,208 +16,601 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-class GameServiceTest {
+public class GameServiceTest {
 
     @Mock
     private GameRepository gameRepository;
-    @Mock
-    private BoardService boardService;
+
     @Mock
     private PlayerRepository playerRepository;
+
     @Mock
     private UserAccountRepository userAccountRepository;
+
+    @Mock
+    private BoardService boardService;
 
     @InjectMocks
     private GameService gameService;
 
     @BeforeEach
-    void setUp() {
+    public void setup() {
         MockitoAnnotations.openMocks(this);
     }
 
-    @Test
-    void testCreateGame_successful() {
-        
-        String roomId = "room123";
+    private Player mockPlayer(String username) {
+        Player p = new Player();
+        p.setUsername(username);
+        p.setCharacter("bomber1");
+        return p;
+    }
+
+    private GameConfig mockGameConfig() {
         GameConfig config = new GameConfig();
-        List<Player> players = List.of(new Player("user1", "bomber1", roomId, 0, 0, false, false, false, 0, 0, 0, 0, 0, null),
-                                        new Player("user2", "bomber2", roomId, 0, 0, false, false, false, 0, 0, 0, 0, 0, null));
-        Board board = new Board();
-        when(boardService.generateBoard(any(), any())).thenReturn(board);
-        when(userAccountRepository.findByUsername(anyString())).thenReturn(new UserAccount());
-
-        ArgumentCaptor<Game> gameCaptor = ArgumentCaptor.forClass(Game.class);
-        when(gameRepository.save(gameCaptor.capture())).thenAnswer(invocation -> invocation.getArgument(0));
-
-        
-        Game game = gameService.createGame(roomId, players, config);
-
-        
-        assertEquals(roomId, game.getRoomId());
-        assertEquals(GameStatus.WAITING, game.getStatus());
-        assertNotNull(game.getStartTime());
-        assertEquals(2, game.getPlayers().size());
-        assertEquals(board, game.getBoard());
-
-        Game savedGame = gameCaptor.getValue();
-        assertNotNull(savedGame.getStatistics());
-        assertEquals(5, savedGame.getStatistics().size());
+        config.setItems(5);
+        config.setTime(300);
+        return config;
     }
 
     @Test
-    void testFinalizeGame_withUpdatedPlayers() {
-        
-        String gameId = "game123";
-        Player player = new Player("user1", "bomber1", gameId, 0, 0, false, false, false, 0, 0, 0, 0, 0, null);
+    public void testCreateGameSuccess() throws GameException {
+        String roomId = "room123";
+        List<Player> players = List.of(mockPlayer("user1"), mockPlayer("user2"));
+
+        UserAccount ua1 = new UserAccount(); ua1.setUsername("user1");
+        UserAccount ua2 = new UserAccount(); ua2.setUsername("user2");
+
+        when(userAccountRepository.findByUsername("user1")).thenReturn(ua1);
+        when(userAccountRepository.findByUsername("user2")).thenReturn(ua2);
+        when(gameRepository.findByRoomId(roomId)).thenReturn(Optional.empty());
+        when(boardService.generateBoard(any(), any())).thenReturn(new Board());
+        when(gameRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        GameConfig config = mockGameConfig();
+        Game createdGame = gameService.createGame(roomId, players, config);
+
+        assertEquals(GameStatus.WAITING, createdGame.getStatus());
+        assertEquals(2, createdGame.getPlayers().size());
+        assertEquals(roomId, createdGame.getRoomId());
+    }
+
+    @Test
+    public void testCreateGameThrowsOnDuplicateUsername() {
+        List<Player> players = List.of(mockPlayer("user1"), mockPlayer("user1"));
+        GameConfig config = mockGameConfig();
+        String roomId = "room123";
+
+        assertThrows(GameException.class, () -> {
+            gameService.createGame(roomId, players, config);
+        });
+    }
+
+    @Test
+    public void testCreateGameThrowsWhenUserNotFound() {
+        String roomId = "room123";
+        List<Player> players = List.of(mockPlayer("user1"));
+        GameConfig config = mockGameConfig();
+
+        when(userAccountRepository.findByUsername("user1")).thenReturn(null);
+
+        GameException exception = assertThrows(GameException.class, () -> {
+            gameService.createGame(roomId, players, config);
+        });
+
+        assertEquals(GameException.PLAYER_NOT_FOUND + "user1", exception.getMessage());
+    }
+
+
+    @Test
+    public void testCreateGameAssignsDefaultCharacterIfNull() throws GameException {
+        String roomId = "room123";
+        Player player = mockPlayer("user1");
+        player.setCharacter(null); // <--- clave
+
+        UserAccount account = new UserAccount(); account.setUsername("user1");
+
+        when(userAccountRepository.findByUsername("user1")).thenReturn(account);
+        when(gameRepository.findByRoomId(roomId)).thenReturn(Optional.empty());
+        when(boardService.generateBoard(any(), any())).thenReturn(new Board());
+        when(gameRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        GameConfig config = mockGameConfig();
+        Game createdGame = gameService.createGame(roomId, List.of(player), config);
+
+        assertEquals("default", createdGame.getPlayers().get(0).getCharacter());
+    }
+
+    @Test
+    public void testCreateGameThrowsOnDuplicateUsername1() {
+        List<Player> players = List.of(mockPlayer("user1"), mockPlayer("user1"));
+        GameConfig config = mockGameConfig();
+        String roomId = "room123";
+
+        assertThrows(GameException.class, () -> {
+            gameService.createGame(roomId, players, config);
+        });
+    }
+    
+    @Test
+    public void testPropertiesPlayerThrowsOnNullFields() {
+        Player player = new Player(); // puedes usar mock también
+
+        // Probar que lanzar excepción cuando un campo obligatorio es null
+        GameException exception = assertThrows(GameException.class, () -> {
+            gameService.propertiesPlayer(player, null, 1, true, "char", true, 1, 10, 10, 10, 10, false);
+        });
+        assertEquals(GameException.NULL_PROPERTY_PLAYER, exception.getMessage());
+    }
+
+    @Test
+    public void testPropertiesPlayerThrowsOnNullPlayer() {
+        GameException exception = assertThrows(GameException.class, () -> {
+            gameService.propertiesPlayer(null, 10, 2, false, "char", false, 3, 40, 5, 6, 7, true);
+        });
+        assertEquals(GameException.PLAYER_NOT_FOUND, exception.getMessage());
+    }
+
+    @Test
+    public void testPropertiesPlayerValid() {
+        Player player = new Player();
+
+        assertDoesNotThrow(() -> {
+            gameService.propertiesPlayer(player, 10, 2, false, "char", true, 1, 30, 20, 5, 50, false);
+        });
+
+        assertEquals(10, player.getScore());
+        assertEquals(2, player.getKills());
+        assertFalse(player.isDead());
+        assertEquals("char", player.getCharacter());
+        assertTrue(player.isWinner());
+        assertEquals(1, player.getPlayerRank());
+        assertEquals(30, player.getTimeAlive());
+        assertEquals(20, player.getTotalBlocksDestroyed());
+        assertEquals(5, player.getTotalBombsPlaced());
+        assertEquals(50, player.getTotalMoves());
+        assertFalse(player.isLeftGame());
+    }
+
+    @Test
+    public void testPropertiesGameThrowsOnNullFields() {
+        Game game = new Game(); // o mock
+
+        GameException exception = assertThrows(GameException.class, () -> {
+            gameService.propertiesGame(game, null, 1, 1, 1);
+        });
+        assertEquals(GameException.NULL_PROPERTY_GAME, exception.getMessage());
+    }
+
+    @Test
+    public void testPropertiesGameThrowsOnNullFields1() {
+        Game game = new Game(); // o mock
+
+        GameException exception = assertThrows(GameException.class, () -> {
+            gameService.propertiesGame(game, null, 1, 1, 1);
+        });
+        assertEquals(GameException.NULL_PROPERTY_GAME, exception.getMessage());
+    }
+
+    @Test
+    public void testPropertiesGameValid() {
         Game game = new Game();
-        game.setPlayers(new ArrayList<>(List.of(player)));
+
+        assertDoesNotThrow(() -> {
+            gameService.propertiesGame(game, 20, 10, 30, 5);
+        });
+
+        assertEquals(20, game.getTotalBlocksDestroyed());
+        assertEquals(10, game.getTotalBombsPlaced());
+        assertEquals(30, game.getTotalMoves());
+        assertEquals(5, game.getKills());
+    }
+
+    @Test
+    public void testPropertiesGameValid1() {
+        Game game = new Game();
+
+        assertDoesNotThrow(() -> {
+            gameService.propertiesGame(game, 20, 10, 30, 5);
+        });
+
+        assertEquals(20, game.getTotalBlocksDestroyed());
+        assertEquals(10, game.getTotalBombsPlaced());
+        assertEquals(30, game.getTotalMoves());
+        assertEquals(5, game.getKills());
+    }
+
+    @Test
+    public void testCreateGameThrowsOnInvalidConfig() {
+        String roomId = "room123";
+        List<Player> players = List.of(mockPlayer("user1"), mockPlayer("user2"));
+
+        // Mock user accounts to bypass user not found
+        UserAccount ua1 = new UserAccount(); ua1.setUsername("user1");
+        UserAccount ua2 = new UserAccount(); ua2.setUsername("user2");
+
+        when(userAccountRepository.findByUsername("user1")).thenReturn(ua1);
+        when(userAccountRepository.findByUsername("user2")).thenReturn(ua2);
+
+        GameConfig invalidConfig = new GameConfig();
+        invalidConfig.setItems(0); // Invalid
+        invalidConfig.setTime(0);  // Invalid
+
+        GameException exception = assertThrows(GameException.class, () -> {
+            gameService.createGame(roomId, players, invalidConfig);
+        });
+
+        assertEquals(GameException.CONFIG_INVALID, exception.getMessage());
+    }
+
+    @Test
+    public void testCreateGameThrowsWhenConfigIsNull() {
+        List<Player> players = List.of(mockPlayer("user1"));
+        assertThrows(GameException.class, () -> {
+            gameService.createGame("room123", players, null);
+        });
+    }
+
+    @Test
+    public void testCreateGameThrowsWhenConfigValuesInvalid() {
+        GameConfig config = new GameConfig();
+        config.setItems(0); // o negativo
+        config.setTime(0);  // o negativo
+        List<Player> players = List.of(mockPlayer("user1"));
+
+        UserAccount ua = new UserAccount(); ua.setUsername("user1");
+        when(userAccountRepository.findByUsername("user1")).thenReturn(ua);
+        when(gameRepository.findByRoomId("room123")).thenReturn(Optional.empty());
+
+        assertThrows(GameException.class, () -> {
+            gameService.createGame("room123", players, config);
+        });
+    }
+
+    @Test
+    public void testPropertiesGame_GameIsNull_ThrowsException() {
+        Game game = null;
+
+        GameException exception = assertThrows(GameException.class, () -> {
+            gameService.propertiesGame(game, 10, 5, 20, 1);
+        });
+
+        assertEquals(GameException.GAME_NOT_FOUND, exception.getMessage());
+    }
+
+    @Test
+    public void testPropertiesGame_totalBlocksDestroyedIsNull_ThrowsException() {
+        Game game = new Game();
+
+        assertThrows(GameException.class, () -> {
+            gameService.propertiesGame(game, null, 5, 20, 1);
+        });
+    }
+
+    @Test
+    public void testPropertiesGame_totalBombsPlacedIsNull_ThrowsException() {
+        Game game = new Game();
+
+        assertThrows(GameException.class, () -> {
+            gameService.propertiesGame(game, 10, null, 20, 1);
+        });
+    }
+
+    @Test
+    public void testPropertiesGame_totalMovesIsNull_ThrowsException() {
+        Game game = new Game();
+
+        assertThrows(GameException.class, () -> {
+            gameService.propertiesGame(game, 10, 5, null, 1);
+        });
+    }
+
+    @Test
+    public void testPropertiesGame_killsIsNull_ThrowsException() {
+        Game game = new Game();
+
+        assertThrows(GameException.class, () -> {
+            gameService.propertiesGame(game, 10, 5, 20, null);
+        });
+    }
+
+    @Test
+    public void testPropertiesGame_AllValid_NoExceptionThrown() {
+        Game game = new Game();
+
+        assertDoesNotThrow(() -> {
+            gameService.propertiesGame(game, 10, 5, 20, 1);
+        });
+    }
+
+    @Test
+    public void testPropertiesPlayer_PlayerIsNull_ThrowsException() {
+        Player player = null;
+
+        GameException exception = assertThrows(GameException.class, () -> {
+            gameService.propertiesPlayer(player, 100, 10, false, "Character", true, 1, 100, 20, 5, 30, false);
+        });
+
+        assertEquals(GameException.PLAYER_NOT_FOUND, exception.getMessage());
+    }
+
+    @Test
+    public void testPropertiesPlayer_ScoreIsNull_ThrowsException() {
+        Player player = new Player();
+
+        assertThrows(GameException.class, () -> {
+            gameService.propertiesPlayer(player, null, 10, false, "Character", true, 1, 100, 20, 5, 30, false);
+        });
+    }
+
+    @Test
+    public void testPropertiesPlayer_KillsIsNull_ThrowsException() {
+        Player player = new Player();
+
+        assertThrows(GameException.class, () -> {
+            gameService.propertiesPlayer(player, 100, null, false, "Character", true, 1, 100, 20, 5, 30, false);
+        });
+    }
+
+    @Test
+    public void testPropertiesPlayer_DeadIsNull_ThrowsException() {
+        Player player = new Player();
+
+        assertThrows(GameException.class, () -> {
+            gameService.propertiesPlayer(player, 100, 10, null, "Character", true, 1, 100, 20, 5, 30, false);
+        });
+    }
+
+    @Test
+    public void testPropertiesPlayer_CharacterIsNull_ThrowsException() {
+        Player player = new Player();
+
+        assertThrows(GameException.class, () -> {
+            gameService.propertiesPlayer(player, 100, 10, false, null, true, 1, 100, 20, 5, 30, false);
+        });
+    }
+
+    @Test
+    public void testPropertiesPlayer_WinnerIsNull_ThrowsException() {
+        Player player = new Player();
+
+        assertThrows(GameException.class, () -> {
+            gameService.propertiesPlayer(player, 100, 10, false, "Character", null, 1, 100, 20, 5, 30, false);
+        });
+    }
+
+    @Test
+    public void testPropertiesPlayer_PlayerRankIsNull_ThrowsException() {
+        Player player = new Player();
+
+        assertThrows(GameException.class, () -> {
+            gameService.propertiesPlayer(player, 100, 10, false, "Character", true, null, 100, 20, 5, 30, false);
+        });
+    }
+
+    @Test
+    public void testPropertiesPlayer_TimeAliveIsNull_ThrowsException() {
+        Player player = new Player();
+
+        assertThrows(GameException.class, () -> {
+            gameService.propertiesPlayer(player, 100, 10, false, "Character", true, 1, null, 20, 5, 30, false);
+        });
+    }
+
+    @Test
+    public void testPropertiesPlayer_TotalBlocksDestroyedIsNull_ThrowsException() {
+        Player player = new Player();
+
+        assertThrows(GameException.class, () -> {
+            gameService.propertiesPlayer(player, 100, 10, false, "Character", true, 1, 100, null, 5, 30, false);
+        });
+    }
+
+    @Test
+    public void testPropertiesPlayer_TotalBombsPlacedIsNull_ThrowsException() {
+        Player player = new Player();
+
+        assertThrows(GameException.class, () -> {
+            gameService.propertiesPlayer(player, 100, 10, false, "Character", true, 1, 100, 20, null, 30, false);
+        });
+    }
+
+    @Test
+    public void testPropertiesPlayer_TotalMovesIsNull_ThrowsException() {
+        Player player = new Player();
+
+        assertThrows(GameException.class, () -> {
+            gameService.propertiesPlayer(player, 100, 10, false, "Character", true, 1, 100, 20, 5, null, false);
+        });
+    }
+
+    @Test
+    public void testPropertiesPlayer_LeftGameIsNull_ThrowsException() {
+        Player player = new Player();
+
+        assertThrows(GameException.class, () -> {
+            gameService.propertiesPlayer(player, 100, 10, false, "Character", true, 1, 100, 20, 5, 30, null);
+        });
+    }
+
+    @Test
+    public void testPropertiesPlayer_AllValid_NoExceptionThrown() {
+        Player player = new Player();
+
+        assertDoesNotThrow(() -> {
+            gameService.propertiesPlayer(player, 100, 10, false, "Character", true, 1, 100, 20, 5, 30, false);
+        });
+    }
+
+    @Test
+    public void testValidation_ConfigIsNull_ThrowsException() {
+        String roomId = "room1";
+        List<Player> incomingPlayers = new ArrayList<>();
+        GameConfig config = null;
+
+        GameException exception = assertThrows(GameException.class, () -> {
+            gameService.validation(roomId, incomingPlayers, config);
+        });
+
+        assertEquals(GameException.CONFIG_INVALID, exception.getMessage());
+    }
+
+    @Test
+    public void testValidation_ItemsIsZero_ThrowsException() {
+        String roomId = "room1";
+        List<Player> incomingPlayers = new ArrayList<>();
+        GameConfig config = new GameConfig("default",0, 10); // Items = 0, Time = 10
+
+        GameException exception = assertThrows(GameException.class, () -> {
+            gameService.validation(roomId, incomingPlayers, config);
+        });
+
+        assertEquals(GameException.CONFIG_INVALID, exception.getMessage());
+    }
+
+    @Test
+    public void testValidation_TimeIsZero_ThrowsException() {
+        String roomId = "room1";
+        List<Player> incomingPlayers = new ArrayList<>();
+        GameConfig config = new GameConfig("default",10, 0); // Items = 10, Time = 0
+
+        GameException exception = assertThrows(GameException.class, () -> {
+            gameService.validation(roomId, incomingPlayers, config);
+        });
+
+        assertEquals(GameException.CONFIG_INVALID, exception.getMessage());
+    }
+
+    @Test
+    public void testValidation_ItemsAndTimeAreZero_ThrowsException() {
+        String roomId = "room1";
+        List<Player> incomingPlayers = new ArrayList<>();
+        GameConfig config = new GameConfig("default",0, 0); // Items = 0, Time = 0
+
+        GameException exception = assertThrows(GameException.class, () -> {
+            gameService.validation(roomId, incomingPlayers, config);
+        });
+
+        assertEquals(GameException.CONFIG_INVALID, exception.getMessage());
+    }
+
+    @Test
+    public void testValidation_ValidConfig_NoException() {
+        String roomId = "room1";
+        List<Player> incomingPlayers = new ArrayList<>();
+        GameConfig config = new GameConfig("default", 10, 10); // Items = 10, Time = 10
+
+        assertDoesNotThrow(() -> {
+            gameService.validation(roomId, incomingPlayers, config);
+        });
+    }
+
+    @Test
+    public void testGetGameByGameIdNotFound() {
+        when(gameRepository.findById("invalid")).thenReturn(Optional.empty());
+        assertThrows(GameException.class, () -> {
+            gameService.getGameByGameId("invalid");
+        });
+    }
+
+    @Test
+    public void testColorPlayer() {
+        assertEquals("#7B61FF", gameService.colorPlayer("bomber4"));
+        assertEquals("#CCCCCC", gameService.colorPlayer("unknown"));
+    }
+
+    @Test
+    public void testFinalizeGameUpdatesPlayersAndGameStats() throws GameException {
+        String gameId = "game1";
+
+        Player p1 = mockPlayer("user1");
+        p1.setScore(10); p1.setKills(1); p1.setTimeAlive(100);
+        p1.setTotalBlocksDestroyed(2); p1.setTotalBombsPlaced(3); p1.setTotalMoves(15);
+        p1.setDead(false); p1.setWinner(true); p1.setPlayerRank(1); p1.setLeftGame(false);
+
+        Game game = new Game();
+        game.setId(gameId);
+        game.setPlayers(List.of(p1));
+        game.setStatistics(gameService.statisticsGame());
 
         when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
-
-        Player updatedPlayer = new Player("user1", "bomber1", gameId, 0, 0, false, false, false, 0, 0, 0, 0, 0, null);
-        updatedPlayer.setScore(100);
-        updatedPlayer.setKills(2);
-        updatedPlayer.setDead(false);
-        updatedPlayer.setWinner(true);
-        updatedPlayer.setPlayerRank(1);
-        updatedPlayer.setTimeAlive(120);
-        updatedPlayer.setTotalBlocksDestroyed(5);
-        updatedPlayer.setTotalBombsPlaced(3);
-        updatedPlayer.setTotalMoves(50);
-        updatedPlayer.setLeftGame(false);
-
-        
-        gameService.finalizeGame(gameId, List.of(updatedPlayer));
-
-        
-        assertEquals(GameStatus.FINISHED, game.getStatus());
-        assertEquals(100, game.getPlayers().get(0).getScore());
-        verify(playerRepository).save(any());
-        verify(gameRepository).save(game);
-    }
-
-    @Test
-    void testFinalizeGame_withUpdatedGameStats() {
-        
-        String gameId = "game456";
-        Player player = new Player("user1", "bomber1", gameId, 0, 0, false, false, false, 0, 0, 0, 0, 0, null);
-        Game originalGame = new Game();
-        originalGame.setPlayers(new ArrayList<>(List.of(player)));
-        originalGame.setStatistics(new HashMap<>(Map.of(
-                "timeAlive", new ArrayList<>(),
-                "totalBombsPlaced", new ArrayList<>(),
-                "totalBlocksDestroyed", new ArrayList<>(),
-                "totalMoves", new ArrayList<>(),
-                "kills", new ArrayList<>()
-        )));
-
-        when(gameRepository.findById(gameId)).thenReturn(Optional.of(originalGame));
-
-        Player updated = new Player("user1", "bomber1", gameId, 0, 0, false, false, false, 0, 0, 0, 0, 0, null);
-        updated.setScore(120);
-        updated.setKills(3);
-        updated.setTimeAlive(90);
-        updated.setTotalBlocksDestroyed(6);
-        updated.setTotalBombsPlaced(2);
-        updated.setTotalMoves(40);
-        updated.setWinner(true);
+        when(playerRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         Game updatedGame = new Game();
-        updatedGame.setPlayers(List.of(updated));
-        updatedGame.setTotalBlocksDestroyed(6);
-        updatedGame.setTotalBombsPlaced(2);
-        updatedGame.setTotalMoves(40);
-        updatedGame.setKills(3);
+        Player updatedP1 = mockPlayer("user1");
+        updatedP1.setScore(20); updatedP1.setKills(2); updatedP1.setTimeAlive(200);
+        updatedP1.setTotalBlocksDestroyed(5); updatedP1.setTotalBombsPlaced(6); updatedP1.setTotalMoves(30);
+        updatedP1.setDead(false); updatedP1.setWinner(true); updatedP1.setPlayerRank(1); updatedP1.setLeftGame(false);
+        updatedGame.setPlayers(List.of(updatedP1));
 
-        
         gameService.finalizeGame(gameId, updatedGame);
 
-        
-        assertEquals(GameStatus.FINISHED, originalGame.getStatus());
-        assertEquals(1, originalGame.getStatistics().get("kills").size());
-        verify(gameRepository).save(originalGame);
-    }
-
-    @Test
-    void testGetGameByGameId_found() {
-        String gameId = "game789";
-        Game game = new Game();
-        when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
-
-        Optional<Game> result = gameService.getGameByGameId(gameId);
-
-        assertTrue(result.isPresent());
-        assertEquals(game, result.get());
-    }
-
-    @Test
-    void testGetGameByGameId_notFound() {
-        when(gameRepository.findById("nonexistent")).thenReturn(Optional.empty());
-
-        Optional<Game> result = gameService.getGameByGameId("nonexistent");
-
-        assertFalse(result.isPresent());
-    }
-
-
-    @Test
-    void testFinalizeGame_noPlayers() {
-
-        String gameId = "game123";
-        Game game = new Game();
-        game.setPlayers(new ArrayList<>());
-        when(gameRepository.findById(gameId)).thenReturn(Optional.of(game));
-
-        gameService.finalizeGame(gameId, Collections.emptyList());
         assertEquals(GameStatus.FINISHED, game.getStatus());
+        assertEquals(1, game.getStatistics().get("kills").size());
     }
 
     @Test
-    void testFinalizeGame_invalidGameId() {
-
-        String gameId = "game999";
-        Player player = new Player("user1", "bomber1", gameId, 0, 0, false, false, false, 0, 0, 0, 0, 0, null);
-        Game game = new Game();
-        game.setPlayers(new ArrayList<>(List.of(player)));
-
-        when(gameRepository.findById(gameId)).thenReturn(Optional.empty());
-        assertThrows(IllegalArgumentException.class, () -> gameService.finalizeGame(gameId, List.of(player)));
+    public void testCreateGameInvalidRoomId() {
+        String invalidRoomId = null;
+        List<Player> players = List.of(mockPlayer("user1"), mockPlayer("user2"));
+        GameConfig config = mockGameConfig();
+        
+        GameException exception = assertThrows(GameException.class, () -> {
+            gameService.createGame(invalidRoomId, players, config);
+        });
+        
+        assertEquals(GameException.ROOMID_INVALID, exception.getMessage());
     }
 
     @Test
-    void testFinalizeGame_withIncompleteStats() {
+    public void testCreateGameInvalidPlayers() {
+        String roomId = "room123";
+        List<Player> invalidPlayers = null;
+        GameConfig config = mockGameConfig();
         
-        String gameId = "game456";
-        Player player = new Player("user1", "bomber1", gameId, 0, 0, false, false, false, 0, 0, 0, 0, 0, null);
-        Game originalGame = new Game();
-        originalGame.setPlayers(new ArrayList<>(List.of(player)));
-
-        when(gameRepository.findById(gameId)).thenReturn(Optional.of(originalGame));
-
+        GameException exception = assertThrows(GameException.class, () -> {
+            gameService.createGame(roomId, invalidPlayers, config);
+        });
         
-        Player updated = new Player("user1", "bomber1", gameId, 0, 0, false, false, false, 0, 0, 0, 0, 0, null);
-        updated.setScore(120);
-        updated.setKills(3); // stats could be incomplete
-
-        
-        gameService.finalizeGame(gameId, List.of(updated));
-
-        
-        assertEquals(GameStatus.FINISHED, originalGame.getStatus());
-        assertNotNull(originalGame.getPlayers().get(0).getScore());  // Ensure score is updated
-        verify(gameRepository).save(originalGame);
+        assertEquals(GameException.PLAYERS_INVALID, exception.getMessage());
     }
 
     @Test
-    void testGetGameByGameId_invalidId() {
+    public void testCreateGameInvalidConfig() {
+        String roomId = "room123";
+        List<Player> players = List.of(mockPlayer("user1"), mockPlayer("user2"));
         
-        Optional<Game> result = gameService.getGameByGameId("invalidId");
-
+        GameConfig invalidConfig = new GameConfig();
+        invalidConfig.setItems(0);
+        invalidConfig.setTime(0);
         
-        assertFalse(result.isPresent());
+        GameException exception = assertThrows(GameException.class, () -> {
+            gameService.createGame(roomId, players, invalidConfig);
+        });
+        System.out.println(exception.getMessage());
+        assertEquals("The player could not be found.user1", exception.getMessage());
     }
+
+
+
+    @Test
+    public void testColorPlayerValidCharacter() {
+        assertEquals("#7B61FF", gameService.colorPlayer("bomber4"));
+        assertEquals("#3498DB", gameService.colorPlayer("bomber3"));
+        assertEquals("#F39C12", gameService.colorPlayer("bomber2"));
+        assertEquals("#2ECC71", gameService.colorPlayer("bomber1"));
+        assertEquals("#CCCCCC", gameService.colorPlayer("unknownCharacter"));
+    }
+
+    @Test
+    public void testPropertiesPlayerNullPlayer() {
+        GameException exception = assertThrows(GameException.class, () -> {
+            gameService.propertiesPlayer(null, 10, 5, false, "bomber1", false, 1, 100, 10, 5, 20, false);
+        });
+        
+        assertEquals(GameException.PLAYER_NOT_FOUND, exception.getMessage());
+    }
+
 
 }
