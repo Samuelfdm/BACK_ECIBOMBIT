@@ -20,7 +20,29 @@ public class Player {
     private int score;
     private int kills;
     private boolean dead;
-    private boolean winner; //Para saber si fue o no el ganador de la partida (o uno de los ganadores en caso de empate)
+    private boolean leftGame;
+    private boolean winner; 
+    private int playerRank;
+    private int timeAlive;
+    private int totalBombsPlaced;
+    private int totalBlocksDestroyed;
+    private int totalMoves;
     private UserAccount userAccount;
-    //private Game game; //ESTO NO LO ASOCIAMOS
+
+    public Player(String username, String character) {
+        this.username = username;
+        this.character = character;
+        this.score = 0;
+        this.kills = 0;
+        this.dead = false;
+        this.leftGame = false;
+        this.winner = false;
+        this.playerRank = 0;
+        this.timeAlive = 0;
+        this.totalBombsPlaced = 0;
+        this.totalBlocksDestroyed = 0;
+        this.totalMoves = 0;
+        this.userAccount = null; // Assuming UserAccount can be null initially
+    }
+    
 }
