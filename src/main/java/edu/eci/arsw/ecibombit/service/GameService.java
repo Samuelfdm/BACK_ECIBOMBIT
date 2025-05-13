@@ -181,7 +181,7 @@ public class GameService {
             // Agregar jugador a las estadisticas
             String name = player.getUsername();
             String character = colorPlayer(player.getCharacter());
-            stats.get("timeAlive").add(Map.of("id", name, "name", name, "value", player.getTimeAlive(), "color", character));
+            stats.get("timeAlive").add(Map.of("id", name, "name", name, "value", (player.getTimeAlive())/60, "color", character));
             stats.get("totalBombsPlaced").add(Map.of("id", name, "name", name, "value", player.getTotalBombsPlaced(), "color", character));
             stats.get("totalBlocksDestroyed").add(Map.of("id", name, "name", name, "value", player.getTotalBlocksDestroyed(), "color", character));
             stats.get("totalMoves").add(Map.of("id", name, "name", name, "value", player.getTotalMoves(), "color", character));
