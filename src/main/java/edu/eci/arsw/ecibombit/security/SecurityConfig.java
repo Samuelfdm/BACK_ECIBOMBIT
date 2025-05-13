@@ -1,5 +1,6 @@
 package edu.eci.arsw.ecibombit.security;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -26,19 +27,22 @@ import org.springframework.http.HttpMethod;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @Autowired
+    private JwtValidator jwtValidator;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // permite preflight CORS
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/users/login", "/users/register").permitAll()
                 .requestMatchers("/users/**").authenticated()
                 .requestMatchers("/games/create").authenticated()
                 .requestMatchers("/games/**").authenticated()
                 .anyRequest().permitAll()
-            ).oauth2ResourceServer(oauth2 -> oauth2.jwt());
+            )
+            .addFilterBefore(jwtValidator, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -49,7 +53,8 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // 
-                        .allowedOrigins("http://localhost:3000") 
+                        .allowedOrigins("http://localhost:3000")
+                        .allowedOrigins("http://localhost:5173") 
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") 
                         .allowedHeaders("*")
                         .allowCredentials(true);
