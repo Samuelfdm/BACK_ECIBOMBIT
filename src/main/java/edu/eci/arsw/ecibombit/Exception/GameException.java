@@ -17,7 +17,6 @@ public class GameException extends Exception {
     public static final String ROOM_ALREADY_EXISTS = "Room already exists";
     public static final String PLAYER_COUNT_MISMATCH = "Player count mismatch";
 
-
     /**
      * Constructs a new GameException with the specified message.
      *

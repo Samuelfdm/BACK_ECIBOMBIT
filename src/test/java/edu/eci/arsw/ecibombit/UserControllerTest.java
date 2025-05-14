@@ -8,6 +8,8 @@ import edu.eci.arsw.ecibombit.model.UserAccount;
 import edu.eci.arsw.ecibombit.service.LoginService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -18,8 +20,9 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(UserController.class)
-public class LoginControllerTest {
+@WebMvcTest(value = UserController.class, excludeAutoConfiguration = SpringBootApplication.class)
+@AutoConfigureMockMvc(addFilters = false)
+public class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
 @Service
 public class GameService {
 
@@ -51,7 +50,7 @@ public class GameService {
         game.setPlayers(players);
         game.setStatistics(statisticsGame());
         return gameRepository.save(game);
-    }  
+    }
 
     public List<Player> validation(String roomId, List<Player> incomingPlayers, GameConfig config) throws GameException {
         if (roomId == null) throw new GameException(GameException.ROOMID_INVALID);
@@ -83,7 +82,6 @@ public class GameService {
         return validatedPlayers;
     }
 
-    
     public Map<String, List<Map<String, Object>>> statisticsGame() {
         Map<String, List<Map<String, Object>>> stats = new HashMap<>();
         stats.put("timeAlive", new ArrayList<>());
@@ -119,7 +117,6 @@ public class GameService {
         p.setLeftGame(leftGame);
     }
 
-
     public void propertiesGame(Game game, Integer totalBlocksDestroyed, Integer totalBombsPlaced, Integer totalMoves, Integer kills) throws GameException {
 
         if (game == null) throw new GameException(GameException.GAME_NOT_FOUND);
@@ -133,30 +130,6 @@ public class GameService {
         game.setKills(kills);
     }
 
-
-/**
-    public void finalizeGame(String gameId, List<Player> updatedPlayers) throws GameException {
-        Game game = getGameByGameId(gameId);
-        // Marcar como finalizado
-        game.setStatus(GameStatus.FINISHED);
-        game.setEndTime(LocalDateTime.now());
-        List<Player> gamePlayers = game.getPlayers();
-
-        for (Player updated : updatedPlayers) {
-            // Buscar en los jugadores del juego por username
-            Player player = gamePlayers.stream()
-                    .filter(p -> p.getUsername().equals(updated.getUsername()))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Player with username " + updated.getUsername() + " not found in game " + gameId));
-
-                propertiesPlayer(player, updated.getScore(), updated.getKills(), updated.isDead(), updated.getCharacter(), 
-                                    updated.isWinner(), updated.getPlayerRank(), updated.getTimeAlive(), 
-                                    updated.getTotalBlocksDestroyed(), updated.getTotalBombsPlaced(), updated.getTotalMoves(), updated.isLeftGame());
-                playerRepository.save(player);
-        }
-        gameRepository.save(game);
-    }
-*/
     public void finalizeGame(String gameId, Game updatedGame) throws GameException {
         // Buscar el juego por su ID
         Game game = getGameByGameId(gameId);
@@ -181,7 +154,7 @@ public class GameService {
             // Agregar jugador a las estadisticas
             String name = player.getUsername();
             String character = colorPlayer(player.getCharacter());
-            stats.get("timeAlive").add(Map.of("id", name, "name", name, "value", player.getTimeAlive(), "color", character));
+            stats.get("timeAlive").add(Map.of("id", name, "name", name, "value", (player.getTimeAlive())/60, "color", character));
             stats.get("totalBombsPlaced").add(Map.of("id", name, "name", name, "value", player.getTotalBombsPlaced(), "color", character));
             stats.get("totalBlocksDestroyed").add(Map.of("id", name, "name", name, "value", player.getTotalBlocksDestroyed(), "color", character));
             stats.get("totalMoves").add(Map.of("id", name, "name", name, "value", player.getTotalMoves(), "color", character));
@@ -207,7 +180,6 @@ public class GameService {
             default:
                 return "#CCCCCC"; 
         }
-
     }
 
     public Game getGameByGameId(String gameId) throws GameException {
