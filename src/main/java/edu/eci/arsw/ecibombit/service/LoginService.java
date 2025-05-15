@@ -5,7 +5,6 @@ import edu.eci.arsw.ecibombit.model.UserAccount;
 import edu.eci.arsw.ecibombit.repository.UserAccountRepository;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
-import java.util.List;
 
 @Service
 public class LoginService {
@@ -16,8 +15,8 @@ public class LoginService {
     }
 
     public UserAccount loginOrRegister(UserDTO dto) {
+        validateInput(dto);
         UserAccount existingUser = repository.findByOid(dto.getOid());
-
         System.out.println("OID recibido: " + dto.getOid());
         System.out.println("Usuario encontrado con este OID: " + (existingUser != null));
 
@@ -27,6 +26,12 @@ public class LoginService {
         } else {
             System.out.println("Usuario existente encontrado, actualizando.");
             return update(existingUser, dto);
+        }
+    }
+
+    private void validateInput(UserDTO dto) {
+        if (dto.getOid() == null || dto.getUsername() == null || dto.getEmail() == null) {
+            throw new IllegalArgumentException("Ninguno de los campos [oid, username, email] puede ser nulo.");
         }
     }
 
@@ -48,5 +53,4 @@ public class LoginService {
     public UserAccount getUserByOid(String oid) {
         return repository.findByOid(oid);
     }
-
 }
