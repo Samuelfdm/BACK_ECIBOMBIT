@@ -80,7 +80,8 @@ jobs:
               --set-env-vars \
                 FRONTEND_URL=${{ secrets.FRONTEND_URL }} \
                 BACKEND_URL=${{ secrets.BACKEND_URL }} \
-                WEBSOCKET_URL=${{ secrets.WEBSOCKET_URL }}
+                WEBSOCKET_URL=${{ secrets.WEBSOCKET_URL }} \
+                SPRING_PROFILES_ACTIVE=prod
 
   test:
     needs: deploy
