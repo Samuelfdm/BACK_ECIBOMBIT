@@ -15,9 +15,9 @@ import java.time.Instant;
 @Document(collection = "users")
 public class UserAccount {
     @Id
-    private String id; // Mongo ID
-    private String oid; // Unique ID de EntraID (Microsoft Object ID)
-    private String username; // Display Name o email
+    private String id;
+    private String oid;
+    private String username;
     private String email;
     private Instant createdAt;
 }

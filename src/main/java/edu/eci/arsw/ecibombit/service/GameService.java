@@ -33,13 +33,9 @@ public class GameService {
     }
 
     public Game createGame(String roomId, List<Player> incomingPlayers, GameConfig config) throws GameException {
-
         //validacion de datos
-
         List<Player> players =  validation(roomId,incomingPlayers,config);
-
         // Despues de la verificacion de jugadores, roomID y configuraciones se puede crear el juego
-
         Game game = new Game();
         game.setRoomId(roomId);
         game.setConfig(config);
@@ -187,7 +183,6 @@ public class GameService {
         return gameRepository.findById(gameId)
                 .orElseThrow(() ->new GameException(GameException.GAME_NOT_FOUND));
     }
-
 
     private Board generateBoard(GameConfig config, List<Player> incomingPlayers) {
         return boardService.generateBoard(config, incomingPlayers);

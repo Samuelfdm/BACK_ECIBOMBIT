@@ -45,21 +45,7 @@ public class GameController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
-/** 
-    @PutMapping("/{gameId}/finish/players")
-    public ResponseEntity<Void> finishGame(@PathVariable String gameId, @RequestBody List<Player> players) {
-        try {
-            gameService.finalizeGame(gameId, players);
-            return ResponseEntity.ok().build();
-        } catch (GameException e) {
-            logger.error("Error finishing game for gameId {}: {}", gameId, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (Exception e) {
-            logger.error("Unexpected error while finishing game for gameId {}: {}", gameId, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-*/
+
     @PutMapping("/{gameId}/finish")
     public ResponseEntity<Void> finishGame(@PathVariable String gameId, @RequestBody Game game) {
         try {

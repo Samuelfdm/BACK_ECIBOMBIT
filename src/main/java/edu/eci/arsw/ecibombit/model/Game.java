@@ -18,10 +18,9 @@ import java.util.Map;
 @Getter
 @Document(collection = "games")
 public class Game {
-
     @Id
     private String id;
-    private String roomId; // ID o código de sala
+    private String roomId;
     private List<Player> players;
     private GameConfig config;
     private GameStatus status;
@@ -38,7 +37,7 @@ public class Game {
         this.roomId = roomId;
         this.players = players;
         this.config = config;
-        this.status = GameStatus.WAITING;  // Assuming a default status, can be changed based on requirements
+        this.status = GameStatus.WAITING;
         this.startTime = null;
         this.endTime = null;
         this.board = null;
@@ -48,5 +47,4 @@ public class Game {
         this.kills = 0;
         this.statistics = new HashMap<>();
     }
-
 }

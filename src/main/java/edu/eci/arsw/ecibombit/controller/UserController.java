@@ -4,11 +4,8 @@ import edu.eci.arsw.ecibombit.dto.UserDTO;
 import edu.eci.arsw.ecibombit.model.UserAccount;
 import edu.eci.arsw.ecibombit.service.LoginService;
 import jakarta.validation.Valid;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

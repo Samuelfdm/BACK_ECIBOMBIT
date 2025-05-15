@@ -16,9 +16,7 @@ public class LoginService {
 
     public UserAccount loginOrRegister(UserDTO dto) {
         validateInput(dto);
-
         UserAccount existingUser = repository.findByOid(dto.getOid());
-
         System.out.println("OID recibido: " + dto.getOid());
         System.out.println("Usuario encontrado con este OID: " + (existingUser != null));
 

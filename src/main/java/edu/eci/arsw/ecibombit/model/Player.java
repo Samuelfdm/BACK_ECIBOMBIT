@@ -42,7 +42,6 @@ public class Player {
         this.totalBombsPlaced = 0;
         this.totalBlocksDestroyed = 0;
         this.totalMoves = 0;
-        this.userAccount = null; // Assuming UserAccount can be null initially
+        this.userAccount = null;
     }
-    
 }
