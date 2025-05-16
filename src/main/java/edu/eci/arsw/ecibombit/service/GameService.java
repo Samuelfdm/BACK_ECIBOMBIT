@@ -9,8 +9,9 @@ import edu.eci.arsw.ecibombit.repository.UserAccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -79,12 +80,12 @@ public class GameService {
     }
 
     public Map<String, List<Map<String, Object>>> statisticsGame() {
-        Map<String, List<Map<String, Object>>> stats = new HashMap<>();
-        stats.put("timeAlive", new ArrayList<>());
-        stats.put("totalBombsPlaced", new ArrayList<>());
-        stats.put("totalBlocksDestroyed", new ArrayList<>());
-        stats.put("totalMoves", new ArrayList<>());
-        stats.put("kills", new ArrayList<>());
+        Map<String, List<Map<String, Object>>> stats = new ConcurrentHashMap<>();
+        stats.put("timeAlive", Collections.synchronizedList(new ArrayList<>()));
+        stats.put("totalBombsPlaced", Collections.synchronizedList(new ArrayList<>()));
+        stats.put("totalBlocksDestroyed", Collections.synchronizedList(new ArrayList<>()));
+        stats.put("totalMoves", Collections.synchronizedList(new ArrayList<>()));
+        stats.put("kills", Collections.synchronizedList(new ArrayList<>()));
         return stats;
     }
 
@@ -132,6 +133,9 @@ public class GameService {
     
         //Creacion de estadisticas
         Map<String, List<Map<String, Object>>> stats = game.getStatistics();
+        for (List<Map<String, Object>> statList : stats.values()) {
+            statList.clear();
+        }
         List<Player> gamePlayers = game.getPlayers();
     
         // Actualizar jugadores
@@ -150,7 +154,7 @@ public class GameService {
             // Agregar jugador a las estadisticas
             String name = player.getUsername();
             String character = colorPlayer(player.getCharacter());
-            stats.get("timeAlive").add(Map.of("id", name, "name", name, "value", (player.getTimeAlive())/60, "color", character));
+            stats.get("timeAlive").add(Map.of("id", name, "name", name, "value", (game.getConfig().getTime()*60 )-player.getTimeAlive(), "color", character));
             stats.get("totalBombsPlaced").add(Map.of("id", name, "name", name, "value", player.getTotalBombsPlaced(), "color", character));
             stats.get("totalBlocksDestroyed").add(Map.of("id", name, "name", name, "value", player.getTotalBlocksDestroyed(), "color", character));
             stats.get("totalMoves").add(Map.of("id", name, "name", name, "value", player.getTotalMoves(), "color", character));
