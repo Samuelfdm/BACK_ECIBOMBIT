@@ -6,13 +6,11 @@ import edu.eci.arsw.ecibombit.dto.GameResponseDTO;
 import edu.eci.arsw.ecibombit.model.Game;
 import edu.eci.arsw.ecibombit.model.Player;
 import edu.eci.arsw.ecibombit.service.GameService;
-
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import ch.qos.logback.classic.Logger;
 
 import java.util.List;
