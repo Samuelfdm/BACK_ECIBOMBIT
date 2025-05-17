@@ -13,7 +13,7 @@ import lombok.Setter;
 public class Cell {
     private int x;
     private int y;
-    private String playerId; // o username
+    private String playerId;
     private CellType type;
 
     public Cell(int x, int y, CellType type) {
